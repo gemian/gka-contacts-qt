@@ -186,6 +186,16 @@ FocusScope {
             }
             ZoomLabel {
                 leftPadding: app.appFontSize/2
+                text: i18n.tr("Landline")
+                visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Landline)
+                Layout.alignment: Qt.AlignRight
+            }
+            ZoomLabel {
+                visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Landline)
+                text: getPhoneNumberOfType(contactSelected, PhoneNumber.Landline)
+            }
+            ZoomLabel {
+                leftPadding: app.appFontSize/2
                 text: i18n.tr("Address")
                 visible: getAddress(contactSelected, 0)
                 Layout.alignment: Qt.AlignRight

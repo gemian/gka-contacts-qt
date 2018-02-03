@@ -17,6 +17,7 @@ Window {
     y: Screen.height / 2 - height / 2
 
     property var contactObject:null
+    property var model:null
 
     property var localeDateInputMask: makeLocaleDateInputMask()
 
@@ -108,6 +109,9 @@ Window {
         if (getPhoneNumberOfType(c, PhoneNumber.Voice)) {
             voicePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Voice);
         }
+        if (getPhoneNumberOfType(c, PhoneNumber.Landline)) {
+            landlinePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Landline);
+        }
         if (c.addresses && c.addresses[0]) {
             var address = c.addresses[0];
             if (address.street) {
@@ -153,15 +157,15 @@ Window {
         if (c.birthday && c.birthday.birthday.isValid()) {
             birthdayField.text = c.birthday.birthday.toLocaleDateString(Qt.locale(), Locale.ShortFormat);
         }
-        if (c.organisation) {
-            if (c.organisation.name) {
-                organisationNameField.text = c.organisation.name;
+        if (c.organization) {
+            if (c.organization.name) {
+                organisationNameField.text = c.organization.name;
             }
-            if (contact.organisation.role) {
-                organisationRoleField.text = c.organisation.role;
+            if (c.organization.role) {
+                organisationRoleField.text = c.organization.role;
             }
-            if (contact.organisation.title) {
-                organisationTitleField.text = c.organisation.title;
+            if (c.organization.title) {
+                organisationTitleField.text = c.organization.title;
             }
         }
         if (c.url && c.url.url) {
@@ -176,7 +180,75 @@ Window {
     }
 
     function saveContact() {
+        if (!contactObject) {
+            contactObject = Qt.createQmlObject("import QtContacts 5.0; Contact {}", Qt.application, "EditContactDialog.qml");
+        }
 
+        contactObject.name.firstName = firstNameField.text;
+        contactObject.name.middleName = middleNameField.text;
+        contactObject.name.lastName = lastNameField.text;
+        contactObject.email.emailAddress = emailAddressField.text;
+
+        //PhoneNumber.Mobile
+        //PhoneNumber.Voice
+        //PhoneNumber.Landline
+
+        if ((contactObject.addresses && contactObject.addresses[0]) || addressStreetField.text || addressLocalityField.text || addressRegionField.text || addressPostcodeField || addressCountryField || addressPostOfficeBoxField) {
+            var address = contactObject.addresses[0];
+            if (address === null || address === undefined ){
+                address = Qt.createQmlObject("import QtContacts 5.0; Address {}", contactObject, "EditContactDialog.qml");
+                address.street = addressStreetField.text;
+                address.locality = addressLocalityField.text;
+                address.region = addressRegionField.text;
+                address.postcode = addressPostcodeField.text;
+                address.country = addressCountryField.text;
+                address.postOfficeBox = addressPostOfficeBoxField.text;
+                contactObject.addDetail(address);
+            } else {
+                address.street = addressStreetField.text;
+                address.locality = addressLocalityField.text;
+                address.region = addressRegionField.text;
+                address.postcode = addressPostcodeField.text;
+                address.country = addressCountryField.text;
+                address.postOfficeBox = addressPostOfficeBoxField.text;
+            }
+        }
+
+        if ((contactObject.addresses && contactObject.addresses[1]) || addressOStreetField.text || addressOLocalityField.text || addressORegionField.text || addressOPostcodeField || addressOCountryField || addressOPostOfficeBoxField) {
+            var addressO = contactObject.addresses[1];
+            if (addressO === null || addressO === undefined ){
+                addressO = Qt.createQmlObject("import QtContacts 5.0; Address {}", contactObject, "EditContactDialog.qml");
+                addressO.street = addressOStreetField.text;
+                addressO.locality = addressOLocalityField.text;
+                addressO.region = addressORegionField.text;
+                addressO.postcode = addressOPostcodeField.text;
+                addressO.country = addressOCountryField.text;
+                addressO.postOfficeBox = addressOPostOfficeBoxField.text;
+                contactObject.addDetail(addressO);
+            } else {
+                addressO.street = addressOStreetField.text;
+                addressO.locality = addressOLocalityField.text;
+                addressO.region = addressORegionField.text;
+                addressO.postcode = addressOPostcodeField.text;
+                addressO.country = addressOCountryField.text;
+                addressO.postOfficeBox = addressOPostOfficeBoxField.text;
+            }
+        }
+        var birthday = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+        if (birthday.isValid()) {
+            contactObject.birthday.birthday = birthday;
+        } else {
+            contactObject.birthday.birthday = "";
+        }
+        contactObject.organization.name = organisationNameField.text;
+        contactObject.organization.role = organisationRoleField.text;
+        contactObject.organization.title = organisationTitleField.text;
+        contactObject.url.url = urlField.text;
+        contactObject.hobby.hobby = hobbyField.text;
+
+        contactObject.note.note = noteField.text;
+
+        model.saveContact(contactObject)
     }
 
     Rectangle {
@@ -288,11 +360,26 @@ Window {
                 }
                 TextField {
                     id: voicePhoneNumberField
-                    KeyNavigation.down: addressStreetField
+                    KeyNavigation.down: landlinePhoneNumberField
                     Layout.fillWidth: true
                     onFocusChanged: {
                         if (activeFocus) {
                             makeItemVisible(voicePhoneNumberField)
+                        }
+                    }
+                }
+                ZoomLabel {
+                    leftPadding: app.appFontSize/2
+                    text: i18n.tr("Landline")
+                    Layout.alignment: Qt.AlignRight
+                }
+                TextField {
+                    id: landlinePhoneNumberField
+                    KeyNavigation.down: addressStreetField
+                    Layout.fillWidth: true
+                    onFocusChanged: {
+                        if (activeFocus) {
+                            makeItemVisible(landlinePhoneNumberField)
                         }
                     }
                 }
@@ -501,20 +588,32 @@ Window {
                             makeItemVisible(birthdayField)
                         } else {
                             var birthday = Date.fromLocaleDateString(Qt.locale(), text, Locale.ShortFormat);
-                            text = birthday.toLocaleDateString(Qt.locale(), Locale.ShortFormat);
+                            if (birthday.isValid()) {
+                                text = birthday.toLocaleDateString(Qt.locale(), Locale.ShortFormat);
+                            }
                         }
                     }
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
-                            datePicker.selectedDate = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                            var date = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                            if (date.isValid()) {
+                                datePicker.selectedDate = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                            } else {
+                                datePicker.selectedDate = new Date()
+                            }
                             datePicker.visible = true;
                         }
                     }
                     Keys.onPressed: {
                         if (event.key === Qt.Key_Tab || event.key === Qt.Key_Space) {
                             console.log("key Tab");
-                            datePicker.selectedDate = Date.fromLocaleDateString(Qt.locale(), text, Locale.ShortFormat);
+                            var date = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                            if (date.isValid()) {
+                                datePicker.selectedDate = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                            } else {
+                                datePicker.selectedDate = new Date()
+                            }
                             datePicker.visible = true;
                             event.accepted = true;
                         }
@@ -704,24 +803,30 @@ Window {
         height: parent.height * 0.9
         anchors.centerIn: parent
         focus: visible
-        onClicked: visible = false
+        onClicked: {
+            if (date.isValid()) {
+                birthdayField.text = date.toLocaleDateString(Qt.locale(), Locale.ShortFormat);
+            }
+            visible = false
+        }
         Keys.onBackPressed: {
             event.accepted = true;
             visible = false;
         }
         Keys.onPressed: {
             if ((event.key === Qt.Key_Space) || (event.key === Qt.Key_Return) || (event.key === Qt.Key_Enter)) {
+                if (selectedDate.isValid()) {
+                    birthdayField.text = selectedDate.toLocaleDateString(Qt.locale(), Locale.ShortFormat);
+                }
                 event.accepted = true;
                 visible = false;
             } else if (event.key === Qt.Key_Escape) {
-                selectedDate =  Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
                 event.accepted = true;
                 visible = false;
             }
         }
         onVisibleChanged: {
             if (!visible) {
-                birthdayField.text = selectedDate.toLocaleDateString(Qt.locale(), Locale.ShortFormat);
                 birthdayField.forceActiveFocus();
             }
         }
