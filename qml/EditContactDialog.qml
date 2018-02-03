@@ -1,5 +1,5 @@
 import QtQuick 2.7
-import QtOrganizer 5.0
+import QtContacts 5.0
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.2
 import QtQuick.Controls 1.4
@@ -74,7 +74,108 @@ Window {
         dialogScrollview.flickableItem.returnToBounds();
     }
 
+    function getPhoneNumberOfType(contact, type) {
+        if (contact.phoneNumbers) {
+            for (var i=0; i < contact.phoneNumbers.length ; ++i) {
+                var phoneNumber = contact.phoneNumbers[i];
+                console.log(phoneNumber.subTypes.indexOf(type)+ " " + type);
+                if (phoneNumber.subTypes.indexOf(type)> -1) {
+                    return phoneNumber.number;
+                }
+            }
+        }
+        return false;
+    }
+
     function edit(c) {
+        if (c.name) {
+            if (c.name.firstName) {
+                firstNameField.text = c.name.firstName;
+            }
+            if (c.name.middleName) {
+                middleNameField.text = c.name.middleName;
+            }
+            if (c.name.lastName) {
+                lastNameField.text = c.name.lastName;
+            }
+        }
+        if (c.email && c.email.emailAddress) {
+            emailAddressField.text = c.email.emailAddress;
+        }
+        if (getPhoneNumberOfType(c, PhoneNumber.Mobile)) {
+            mobilePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Mobile);
+        }
+        if (getPhoneNumberOfType(c, PhoneNumber.Voice)) {
+            voicePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Voice);
+        }
+        if (c.addresses && c.addresses[0]) {
+            var address = c.addresses[0];
+            if (address.street) {
+                addressStreetField.text = address.street;
+            }
+            if (address.locality) {
+                addressLocalityField.text = address.locality;
+            }
+            if (address.region) {
+                addressRegionField.text = address.region;
+            }
+            if (address.postcode) {
+                addressPostcodeField.text = address.postcode;
+            }
+            if (address.country) {
+                addressCountryField.text = address.country;
+            }
+            if (address.postOfficeBox) {
+                addressPostOfficeBoxField.text = address.postOfficeBox;
+            }
+        }
+        if (c.addresses && c.addresses[1]) {
+            var addressO = c.addresses[1];
+            if (addressO.street) {
+                addressOStreetField.text = addressO.street;
+            }
+            if (addressO.locality) {
+                addressOLocalityField.text = addressO.locality;
+            }
+            if (addressO.region) {
+                addressORegionField.text = addressO.region;
+            }
+            if (addressO.postcode) {
+                addressOPostcodeField.text = addressO.postcode;
+            }
+            if (addressO.country) {
+                addressOCountryField.text = addressO.country;
+            }
+            if (addressO.postOfficeBox) {
+                addressOPostOfficeBoxField.text = addressO.postOfficeBox;
+            }
+        }
+        if (c.birthday && c.birthday.birthday.isValid()) {
+            birthdayField.text = c.birthday.birthday.toLocaleDateString(Qt.locale(), Locale.ShortFormat);
+        }
+        if (c.organisation) {
+            if (c.organisation.name) {
+                organisationNameField.text = c.organisation.name;
+            }
+            if (contact.organisation.role) {
+                organisationRoleField.text = c.organisation.role;
+            }
+            if (contact.organisation.title) {
+                organisationTitleField.text = c.organisation.title;
+            }
+        }
+        if (c.url && c.url.url) {
+            urlField.text = c.url.url;
+        }
+        if (c.hobby && c.hobby.hobby) {
+            hobbyField.text = c.hobby.hobby;
+        }
+        if (c.note && c.note.note) {
+            noteField.text = c.note.note;
+        }
+    }
+
+    function saveContact() {
 
     }
 
@@ -113,6 +214,7 @@ Window {
                     width: contactGrid.width - firstNameLabel.width - app.appFontSize
                     KeyNavigation.down: middleNameField
                     Layout.fillWidth: true
+                    focus: true
                     onFocusChanged: {
                         if (activeFocus) {
                             makeItemVisible(firstNameField)
@@ -503,7 +605,7 @@ Window {
                         }
                     }
                 }
-                //Disabled note section as not working
+                //Maybe disabled note section as not working
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Note")

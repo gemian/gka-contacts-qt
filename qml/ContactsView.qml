@@ -9,7 +9,6 @@ import "dateExt.js" as DateExt
 FocusScope {
     anchors.fill: parent
 
-    property int contactsSelectedIndex: 1
     property var contactSelected
 
     function getPhoneNumberOfType(contact, type) {
@@ -108,7 +107,7 @@ FocusScope {
         x: listingColumn.width + app.appFontSize*2
         width: mainView.width - listingColumn.width - app.appFontSize*3
         height: mainView.height - app.appFontSize
-        border.color: "black"
+        border.color: contactGrid.activeFocus ? "black" : "grey"
         border.width: Math.floor(app.appFontSize/10)
         color: "#edeeef"
 
@@ -279,6 +278,42 @@ FocusScope {
         onTriggered: {
             filter.searchString = searchField.text
             console.log("ticker"+filter.searchString)
+        }
+    }
+
+    TextField {
+        id: hiddenTextField
+        visible: false
+    }
+
+    Keys.onPressed: {
+        console.log("key:"+event.key + ", aFIp:"+activeFocusItem.parent + ", aFI: "+activeFocusItem)
+        if (event.key === Qt.Key_Left) {
+            searchField.forceActiveFocus();
+        }
+        if (event.key === Qt.Key_Right) {
+            contactGrid.forceActiveFocus();
+        }
+        if (event.key === Qt.Key_Up) {
+            if (contactGrid.activeFocus) {
+
+            } else {
+                if (contactsListView.currentIndex > 0) {
+                    contactsListView.currentIndex--;
+                }
+            }
+        }
+        if (event.key === Qt.Key_Down) {
+            if (contactGrid.activeFocus) {
+
+            } else {
+                if (contactsListView.currentIndex < contactsListView.count-1) {
+                    contactsListView.currentIndex++;
+                }
+            }
+        }
+        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+            dialogLoader.setSource("EditContactDialog.qml", {"model":contactsModel, "contactObject":contactSelected});
         }
     }
 

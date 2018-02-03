@@ -14,21 +14,17 @@ FocusScope {
 
         onReleased: {
             console.log("dayItemRel i:" + index);
-            contactsSelectedIndex = index;
-            contactSelected = contact;
             contactsListView.currentIndex = index;
             contactsListView.currentItem.forceActiveFocus();
+            contactSelected = contact;
 
             console.log("Note: "+contactSelected.note.note);
         }
     }
 
     onFocusChanged: {
-        if (activeFocus) {
-            if (contactsSelectedIndex !== index) {
-                contactsSelectedIndex = index;
-                contactSelected = contact;
-            }
+        if (activeFocus || contactsListView.currentIndex == index) {
+            contactSelected = contact;
         }
     }
 
@@ -38,9 +34,9 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         height: contactsItemLabel.height
-        color: activeFocus ? "black" : "#edeeef"
+        color: activeFocus ? "black" : index === contactsListView.currentIndex ? "grey" : "#edeeef"
         opacity: 0.9
-        focus: index === contactsSelectedIndex
+        focus: index === contactsListView.currentIndex
 
         Text {
             id: contactsItemLabel
