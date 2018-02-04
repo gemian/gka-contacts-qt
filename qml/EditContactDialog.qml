@@ -19,7 +19,26 @@ Window {
     property var contactObject:null
     property var model:null
 
+    property int activeSectionIndex: 0
     property var localeDateInputMask: makeLocaleDateInputMask()
+
+    function setCheckedButton(index) {
+        activeSectionIndex = index;
+        personalButton.checked = false
+        workButton.checked = false
+        otherButton.checked = false
+        switch (index) {
+        case 0:
+            personalButton.checked = true
+            break;
+        case 1:
+            workButton.checked = true
+            break;
+        case 2:
+            otherButton.checked = true
+            break;
+        }
+    }
 
     function makeLocaleDateInputMask() {
         var sample = new Date().toLocaleDateString(Qt.locale(), Locale.ShortFormat);
@@ -48,44 +67,114 @@ Window {
         return mask;
     }
 
-    function makeItemVisible(item) {
+    function makeItemVisible(item, scrollView) {
         if (!item) {
             return;
         }
 
         // check if visible
-        var bottomY = dialogScrollview.flickableItem.contentY + dialogScrollview.flickableItem.height
+        var bottomY = scrollView.flickableItem.contentY + scrollView.flickableItem.height
         var itemBottom = item.y + (item.height * 3)
-        if (item.y >= dialogScrollview.flickableItem.contentY && itemBottom <= bottomY) {
+        if (item.y >= scrollView.flickableItem.contentY && itemBottom <= bottomY) {
             return;
         }
 
         // if it is not, try to scroll and make it visible
-        var targetY = itemBottom - dialogScrollview.flickableItem.height
+        var targetY = itemBottom - scrollView.flickableItem.height
         if (targetY >= 0 && item.y) {
-            if (targetY > dialogScrollview.contentItem.height-dialogScrollview.flickableItem.height) {
-                targetY = dialogScrollview.contentItem.height-dialogScrollview.flickableItem.height;
+            if (targetY > scrollView.contentItem.height-scrollView.flickableItem.height) {
+                targetY = scrollView.contentItem.height-scrollView.flickableItem.height;
             }
-            dialogScrollview.flickableItem.contentY = targetY;
-        } else if (item.y < dialogScrollview.flickableItem.contentY) {
+            scrollView.flickableItem.contentY = targetY;
+        } else if (item.y < scrollView.flickableItem.contentY) {
             // if it is hidden at the top, also show it
-            dialogScrollview.flickableItem.contentY = item.y-app.appFontSize/2;
+            scrollView.flickableItem.contentY = item.y-app.appFontSize/2;
         }
 
-        dialogScrollview.flickableItem.returnToBounds();
+        scrollView.flickableItem.returnToBounds();
     }
 
-    function getPhoneNumberOfType(contact, type) {
-        if (contact.phoneNumbers) {
-            for (var i=0; i < contact.phoneNumbers.length ; ++i) {
-                var phoneNumber = contact.phoneNumbers[i];
-                console.log(phoneNumber.subTypes.indexOf(type)+ " " + type);
-                if (phoneNumber.subTypes.indexOf(type)> -1) {
-                    return phoneNumber.number;
+    function getAddressObject(contact, context) {
+        if (contact.addresses) {
+            for (var i=0; i < contact.addresses.length ; ++i) {
+                var address = contact.addresses[i];
+                if (address.contexts.indexOf(context)> -1) {
+                    return address;
                 }
             }
         }
         return false;
+    }
+
+    function setAddress(c, context, streetField, localityField, regionField, postcodeField, countryField, poBoxField) {
+        if ((c.addresses && getAddressObject(c, context))
+                || streetField.text.length > 0
+                || localityField.text.length > 0
+                || regionField.text.length > 0
+                || postcodeField.text.length > 0
+                || countryField.text.length > 0
+                || poBoxField.text.length > 0) {
+            var address = getAddressObject(c, context);
+            if (address === false) {
+                address = Qt.createQmlObject("import QtContacts 5.0; Address {}", c, "EditContactDialog.qml");
+                address.street = streetField.text;
+                address.locality = localityField.text;
+                address.region = regionField.text;
+                address.postcode = postcodeField.text;
+                address.country = countryField.text;
+                address.postOfficeBox = poBoxField.text;
+                address.contexts = [context];
+                c.addDetail(address);
+            } else {
+                address.street = streetField.text;
+                address.locality = localityField.text;
+                address.region = regionField.text;
+                address.postcode = postcodeField.text;
+                address.country = countryField.text;
+                address.postOfficeBox = poBoxField.text;
+            }
+        }
+    }
+
+    function getPhoneNumberObjectOfType(contact, type, context) {
+        if (contact.phoneNumbers) {
+            for (var i=0; i < contact.phoneNumbers.length ; ++i) {
+                var phoneNumber = contact.phoneNumbers[i];
+                console.log(phoneNumber.number+" "+phoneNumber.contexts.indexOf(context)+ " " + context+" "+phoneNumber.subTypes.indexOf(type)+ " " + type);
+                if (phoneNumber.subTypes.indexOf(type)> -1) {
+                    if (phoneNumber.contexts.indexOf(context)> -1 || (phoneNumber.contexts.length === 0 && context===ContactDetail.ContextHome)) {
+                        return phoneNumber;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    function getPhoneNumberOfType(contact, type, context) {
+        var phoneNumberObject = getPhoneNumberObjectOfType(contact, type, context);
+        if (phoneNumberObject) {
+            return phoneNumberObject.number;
+        }
+        return false;
+    }
+
+    function setPhoneNumberOfTypeWithField(contact, type, context, field) {
+        var phone = getPhoneNumberObjectOfType(contact, type, context);
+        console.log("setPhone" + phone);
+        if (phone || field.text.length > 0) {
+            if (phone) {
+                console.log("setPhone - update"+field.text);
+                phone.number = field.text;
+            } else {
+                console.log("setPhone - new"+field.text);
+                phone = Qt.createQmlObject("import QtContacts 5.0; PhoneNumber {}", contact, "EditContactDialog.qml");
+                phone.number = field.text;
+                phone.subTypes = [type];
+                phone.contexts = [context];
+                contact.addDetail(phone);
+            }
+        }
     }
 
     function edit(c) {
@@ -103,17 +192,17 @@ Window {
         if (c.email && c.email.emailAddress) {
             emailAddressField.text = c.email.emailAddress;
         }
-        if (getPhoneNumberOfType(c, PhoneNumber.Mobile)) {
-            mobilePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Mobile);
+        if (getPhoneNumberOfType(c, PhoneNumber.Mobile, ContactDetail.ContextHome)) {
+            mobilePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Mobile, ContactDetail.ContextHome);
         }
-        if (getPhoneNumberOfType(c, PhoneNumber.Voice)) {
-            voicePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Voice);
+        if (getPhoneNumberOfType(c, PhoneNumber.Voice, ContactDetail.ContextHome)) {
+            voicePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Voice, ContactDetail.ContextHome);
         }
-        if (getPhoneNumberOfType(c, PhoneNumber.Landline)) {
-            landlinePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Landline);
-        }
-        if (c.addresses && c.addresses[0]) {
-            var address = c.addresses[0];
+//        setAddress(contactObject, ContactDetail.ContextHome, addressStreetField, addressLocalityField, addressRegionField, addressPostcodeField, addressCountryField, addressPostOfficeBoxField);
+
+
+        if (c.addresses && getAddressObject(c, ContactDetail.ContextHome)) {
+            var address = getAddressObject(c, ContactDetail.ContextHome);
             if (address.street) {
                 addressStreetField.text = address.street;
             }
@@ -133,8 +222,41 @@ Window {
                 addressPostOfficeBoxField.text = address.postOfficeBox;
             }
         }
-        if (c.addresses && c.addresses[1]) {
-            var addressO = c.addresses[1];
+        if (getPhoneNumberOfType(c, PhoneNumber.Mobile, ContactDetail.ContextWork)) {
+            mobileWPhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Mobile, ContactDetail.ContextWork);
+        }
+        if (getPhoneNumberOfType(c, PhoneNumber.Voice, ContactDetail.ContextWork)) {
+            voiceWPhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Voice, ContactDetail.ContextWork);
+        }
+        if (c.addresses && getAddressObject(c, ContactDetail.ContextWork)) {
+            var addressW = getAddressObject(c, ContactDetail.ContextWork);
+            if (addressW.street) {
+                addressWStreetField.text = addressW.street;
+            }
+            if (addressW.locality) {
+                addressWLocalityField.text = addressW.locality;
+            }
+            if (addressW.region) {
+                addressWRegionField.text = addressW.region;
+            }
+            if (addressW.postcode) {
+                addressWPostcodeField.text = addressW.postcode;
+            }
+            if (addressW.country) {
+                addressWCountryField.text = addressW.country;
+            }
+            if (addressW.postOfficeBox) {
+                addressWPostOfficeBoxField.text = addressW.postOfficeBox;
+            }
+        }
+        if (getPhoneNumberOfType(c, PhoneNumber.Mobile, ContactDetail.ContextOther)) {
+            mobileOPhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Mobile, ContactDetail.ContextOther);
+        }
+        if (getPhoneNumberOfType(c, PhoneNumber.Voice, ContactDetail.ContextOther)) {
+            voiceOPhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Voice, ContactDetail.ContextOther);
+        }
+        if (c.addresses && getAddressObject(c, ContactDetail.ContextOther)) {
+            var addressO = getAddressObject(c, ContactDetail.ContextOther);
             if (addressO.street) {
                 addressOStreetField.text = addressO.street;
             }
@@ -189,51 +311,21 @@ Window {
         contactObject.name.lastName = lastNameField.text;
         contactObject.email.emailAddress = emailAddressField.text;
 
-        //PhoneNumber.Mobile
-        //PhoneNumber.Voice
-        //PhoneNumber.Landline
+        setPhoneNumberOfTypeWithField(contactObject, PhoneNumber.Mobile, ContactDetail.ContextHome, mobilePhoneNumberField);
+        setPhoneNumberOfTypeWithField(contactObject, PhoneNumber.Voice, ContactDetail.ContextHome, voicePhoneNumberField);
 
-        if ((contactObject.addresses && contactObject.addresses[0]) || addressStreetField.text || addressLocalityField.text || addressRegionField.text || addressPostcodeField || addressCountryField || addressPostOfficeBoxField) {
-            var address = contactObject.addresses[0];
-            if (address === null || address === undefined ){
-                address = Qt.createQmlObject("import QtContacts 5.0; Address {}", contactObject, "EditContactDialog.qml");
-                address.street = addressStreetField.text;
-                address.locality = addressLocalityField.text;
-                address.region = addressRegionField.text;
-                address.postcode = addressPostcodeField.text;
-                address.country = addressCountryField.text;
-                address.postOfficeBox = addressPostOfficeBoxField.text;
-                contactObject.addDetail(address);
-            } else {
-                address.street = addressStreetField.text;
-                address.locality = addressLocalityField.text;
-                address.region = addressRegionField.text;
-                address.postcode = addressPostcodeField.text;
-                address.country = addressCountryField.text;
-                address.postOfficeBox = addressPostOfficeBoxField.text;
-            }
-        }
+        setAddress(contactObject, ContactDetail.ContextHome, addressStreetField, addressLocalityField, addressRegionField, addressPostcodeField, addressCountryField, addressPostOfficeBoxField);
 
-        if ((contactObject.addresses && contactObject.addresses[1]) || addressOStreetField.text || addressOLocalityField.text || addressORegionField.text || addressOPostcodeField || addressOCountryField || addressOPostOfficeBoxField) {
-            var addressO = contactObject.addresses[1];
-            if (addressO === null || addressO === undefined ){
-                addressO = Qt.createQmlObject("import QtContacts 5.0; Address {}", contactObject, "EditContactDialog.qml");
-                addressO.street = addressOStreetField.text;
-                addressO.locality = addressOLocalityField.text;
-                addressO.region = addressORegionField.text;
-                addressO.postcode = addressOPostcodeField.text;
-                addressO.country = addressOCountryField.text;
-                addressO.postOfficeBox = addressOPostOfficeBoxField.text;
-                contactObject.addDetail(addressO);
-            } else {
-                addressO.street = addressOStreetField.text;
-                addressO.locality = addressOLocalityField.text;
-                addressO.region = addressORegionField.text;
-                addressO.postcode = addressOPostcodeField.text;
-                addressO.country = addressOCountryField.text;
-                addressO.postOfficeBox = addressOPostOfficeBoxField.text;
-            }
-        }
+        setPhoneNumberOfTypeWithField(contactObject, PhoneNumber.Mobile, ContactDetail.ContextWork, mobileWPhoneNumberField);
+        setPhoneNumberOfTypeWithField(contactObject, PhoneNumber.Voice, ContactDetail.ContextWork, voiceWPhoneNumberField);
+
+        setAddress(contactObject, ContactDetail.ContextWork, addressWStreetField, addressWLocalityField, addressWRegionField, addressWPostcodeField, addressWCountryField, addressWPostOfficeBoxField);
+
+        setPhoneNumberOfTypeWithField(contactObject, PhoneNumber.Mobile, ContactDetail.ContextOther, mobileOPhoneNumberField);
+        setPhoneNumberOfTypeWithField(contactObject, PhoneNumber.Voice, ContactDetail.ContextOther, voiceOPhoneNumberField);
+
+        setAddress(contactObject, ContactDetail.ContextOther, addressOStreetField, addressOLocalityField, addressORegionField, addressOPostcodeField, addressOCountryField, addressOPostOfficeBoxField);
+
         var birthday = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
         if (birthday.isValid()) {
             contactObject.birthday.birthday = birthday;
@@ -259,469 +351,711 @@ Window {
         border.width: Math.floor(app.appFontSize/10)
         color: "#edeeef"
 
-        ScrollView {
-            id: dialogScrollview
+        Column {
+            id: extrasColumn
+            spacing: app.appFontSize
             width: dialogRectangle.width - okCancelButtonsColumn.width - app.appFontSize
-            height: dialogRectangle.height
 
-            GridLayout {
-                id: contactGrid
-                width: dialogScrollview.viewport.width
-                columns: 2
-                columnSpacing: app.appFontSize
-                Layout.topMargin: app.appFontSize
+            Row {
+                id: sectionButtonsRow
+                spacing: app.appFontSize
+                topPadding: app.appFontSize
+                leftPadding: app.appFontSize
 
-                Item {
-                    height: app.appFontSize/2
-                    Layout.columnSpan: 2
-                }
-                ZoomLabel {
-                    id: firstNameLabel
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("First Name")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: firstNameField
-                    width: contactGrid.width - firstNameLabel.width - app.appFontSize
-                    KeyNavigation.down: middleNameField
-                    Layout.fillWidth: true
-                    focus: true
+                ZoomButton {
+                    id: personalButton
+                    activeFocusOnTab: true
+                    activeFocusOnPress: true
+                    checkable: true
+                    text: i18n.tr("Personal (ctrl-p)")
+                    onClicked: {
+                        setCheckedButton(0);
+                    }
                     onFocusChanged: {
                         if (activeFocus) {
-                            makeItemVisible(firstNameField)
+                            setCheckedButton(0);
                         }
                     }
+                    KeyNavigation.right: workButton
+                    KeyNavigation.down: firstNameField
                 }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Middle Name")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: middleNameField
-                    KeyNavigation.down: lastNameField
-                    Layout.fillWidth: true
+                ZoomButton {
+                    id: workButton
+                    activeFocusOnTab: true
+                    activeFocusOnPress: true
+                    checkable: true
+                    text: i18n.tr("Work (ctrl-w)")
+                    onClicked: {
+                        setCheckedButton(1);
+                    }
                     onFocusChanged: {
                         if (activeFocus) {
-                            makeItemVisible(middleNameField)
+                            setCheckedButton(1);
                         }
                     }
+                    KeyNavigation.right: otherButton
+                    KeyNavigation.down: mobileWPhoneNumberField
                 }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Last Name")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: lastNameField
-                    KeyNavigation.down: emailAddressField
-                    Layout.fillWidth: true
+                ZoomButton {
+                    id: otherButton
+                    checkable: true
+                    activeFocusOnTab: true
+                    activeFocusOnPress: true
+                    text: i18n.tr("Other (ctrl-o)")
+                    onClicked: {
+                        setCheckedButton(2);
+                    }
                     onFocusChanged: {
                         if (activeFocus) {
-                            makeItemVisible(lastNameField)
+                            setCheckedButton(2);
                         }
                     }
+                    KeyNavigation.down: mobileOPhoneNumberField
                 }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Email")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: emailAddressField
-                    KeyNavigation.down: mobilePhoneNumberField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(emailAddressField)
-                        }
+            }
+
+            ScrollView {
+                id: personalScrollview
+                width: extrasColumn.width
+                height: dialogRectangle.height - sectionButtonsRow.height
+                visible: activeSectionIndex===0
+
+                GridLayout {
+                    id: personalGrid
+                    width: personalScrollview.viewport.width
+                    columns: 2
+                    columnSpacing: app.appFontSize
+                    Layout.topMargin: app.appFontSize
+
+                    Item {
+                        height: app.appFontSize/2
+                        Layout.columnSpan: 2
                     }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Mobile")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: mobilePhoneNumberField
-                    KeyNavigation.down: voicePhoneNumberField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(mobilePhoneNumberField)
-                        }
+                    ZoomLabel {
+                        id: firstNameLabel
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("First Name")
+                        Layout.alignment: Qt.AlignRight
                     }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Voice")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: voicePhoneNumberField
-                    KeyNavigation.down: landlinePhoneNumberField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(voicePhoneNumberField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Landline")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: landlinePhoneNumberField
-                    KeyNavigation.down: addressStreetField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(landlinePhoneNumberField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Address")
-                    Layout.columnSpan: 2
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Street")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressStreetField
-                    KeyNavigation.down: addressLocalityField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressStreetField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Locality")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressLocalityField
-                    KeyNavigation.down: addressRegionField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressLocalityField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Region")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressRegionField
-                    KeyNavigation.down: addressPostcodeField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressRegionField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Postcode")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressPostcodeField
-                    KeyNavigation.down: addressCountryField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressPostcodeField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Country")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressCountryField
-                    KeyNavigation.down: addressPostOfficeBoxField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressCountryField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Post Office Box")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressPostOfficeBoxField
-                    KeyNavigation.down: addressOStreetField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressPostOfficeBoxField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Address (Other)")
-                    Layout.columnSpan: 2
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Street")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressOStreetField
-                    KeyNavigation.down: addressOLocalityField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressOStreetField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Locality")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressOLocalityField
-                    KeyNavigation.down: addressORegionField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressOLocalityField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Region")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressORegionField
-                    KeyNavigation.down: addressOPostcodeField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressORegionField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Postcode")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressOPostcodeField
-                    KeyNavigation.down: addressOCountryField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressOPostcodeField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Country")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressOCountryField
-                    KeyNavigation.down: addressOPostOfficeBoxField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressOCountryField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Post Office Box")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: addressOPostOfficeBoxField
-                    KeyNavigation.down: birthdayField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(addressOPostOfficeBoxField)
-                        }
-                    }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Birthday")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: birthdayField
-                    inputMask: localeDateInputMask
-                    font.pixelSize: app.appFontSize
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(birthdayField)
-                        } else {
-                            var birthday = Date.fromLocaleDateString(Qt.locale(), text, Locale.ShortFormat);
-                            if (birthday.isValid()) {
-                                text = birthday.toLocaleDateString(Qt.locale(), Locale.ShortFormat);
+                    TextField {
+                        id: firstNameField
+                        KeyNavigation.down: middleNameField
+                        Layout.fillWidth: true
+                        focus: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(firstNameField, personalScrollview)
                             }
                         }
                     }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            var date = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
-                            if (date.isValid()) {
-                                datePicker.selectedDate = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Middle Name")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: middleNameField
+                        KeyNavigation.down: lastNameField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(middleNameField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Last Name")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: lastNameField
+                        KeyNavigation.down: emailAddressField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(lastNameField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Email")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: emailAddressField
+                        KeyNavigation.down: mobilePhoneNumberField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(emailAddressField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Mobile")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: mobilePhoneNumberField
+                        KeyNavigation.down: voicePhoneNumberField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(mobilePhoneNumberField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Voice")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: voicePhoneNumberField
+                        KeyNavigation.down: addressStreetField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(voicePhoneNumberField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Address")
+                        Layout.columnSpan: 2
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Street")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressStreetField
+                        KeyNavigation.down: addressLocalityField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressStreetField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Locality")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressLocalityField
+                        KeyNavigation.down: addressRegionField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressLocalityField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Region")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressRegionField
+                        KeyNavigation.down: addressPostcodeField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressRegionField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Postcode")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressPostcodeField
+                        KeyNavigation.down: addressCountryField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressPostcodeField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Country")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressCountryField
+                        KeyNavigation.down: addressPostOfficeBoxField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressCountryField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Post Office Box")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressPostOfficeBoxField
+                        KeyNavigation.down: birthdayField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressPostOfficeBoxField, personalScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Birthday")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: birthdayField
+                        inputMask: localeDateInputMask
+                        font.pixelSize: app.appFontSize
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(birthdayField, personalScrollview)
                             } else {
-                                datePicker.selectedDate = new Date()
+                                var birthday = Date.fromLocaleDateString(Qt.locale(), text, Locale.ShortFormat);
+                                if (birthday.isValid()) {
+                                    text = birthday.toLocaleDateString(Qt.locale(), Locale.ShortFormat);
+                                }
                             }
-                            datePicker.visible = true;
                         }
-                    }
-                    Keys.onPressed: {
-                        if (event.key === Qt.Key_Tab || event.key === Qt.Key_Space) {
-                            console.log("key Tab");
-                            var date = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
-                            if (date.isValid()) {
-                                datePicker.selectedDate = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
-                            } else {
-                                datePicker.selectedDate = new Date()
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                var date = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                                if (date.isValid()) {
+                                    datePicker.selectedDate = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                                } else {
+                                    datePicker.selectedDate = new Date()
+                                }
+                                datePicker.visible = true;
                             }
-                            datePicker.visible = true;
-                            event.accepted = true;
+                        }
+                        Keys.onPressed: {
+                            if (event.key === Qt.Key_Tab || event.key === Qt.Key_Space) {
+                                console.log("key Tab");
+                                var date = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                                if (date.isValid()) {
+                                    datePicker.selectedDate = Date.fromLocaleDateString(Qt.locale(), birthdayField.text, Locale.ShortFormat);
+                                } else {
+                                    datePicker.selectedDate = new Date()
+                                }
+                                datePicker.visible = true;
+                                event.accepted = true;
+                            }
+                        }
+                        KeyNavigation.down: urlField
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Url")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: urlField
+                        KeyNavigation.down: hobbyField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(urlField, personalScrollview)
+                            }
                         }
                     }
-                    KeyNavigation.down: organisationNameField
-                }
-                ZoomLabel {
-                    id: organisationLabel
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Organisation")
-                    Layout.columnSpan: 2
-                }
-                ZoomLabel {
-                    id: organisationNameLabel
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Name")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: organisationNameField
-                    KeyNavigation.down: organisationRoleField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(organisationNameField)
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Hobby")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: hobbyField
+                        KeyNavigation.down: noteField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(hobbyField, personalScrollview)
+                            }
                         }
                     }
-                }
-                ZoomLabel {
-                    id: organisationRoleLabel
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Role")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: organisationRoleField
-                    KeyNavigation.down: organisationTitleField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(organisationRoleField)
+                    //Maybe disabled note section as not working
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Note")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextArea {
+                        id: noteField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(noteField, personalScrollview)
+                            }
                         }
                     }
-                }
-                ZoomLabel {
-                    id: organisationTitleLabel
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Title")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: organisationTitleField
-                    KeyNavigation.down: urlField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(organisationTitleField)
-                        }
+                    Item {
+                        height: app.appFontSize/2
+                        Layout.columnSpan: 2
                     }
                 }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Url")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: urlField
-                    KeyNavigation.down: hobbyField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(urlField)
+            }
+
+            ScrollView {
+                id: workScrollview
+                width: extrasColumn.width
+                height: dialogRectangle.height - sectionButtonsRow.height
+                visible: activeSectionIndex===1
+
+                GridLayout {
+                    id: workGrid
+                    width: workScrollview.viewport.width
+                    columns: 2
+                    columnSpacing: app.appFontSize
+                    Layout.topMargin: app.appFontSize
+
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Mobile")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: mobileWPhoneNumberField
+                        KeyNavigation.down: voiceWPhoneNumberField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(mobileWPhoneNumberField, workScrollview)
+                            }
                         }
                     }
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Hobby")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextField {
-                    id: hobbyField
-                    KeyNavigation.down: noteField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(hobbyField)
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Voice")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: voiceWPhoneNumberField
+                        KeyNavigation.down: addressWStreetField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(voiceWPhoneNumberField, workScrollview)
+                            }
                         }
                     }
-                }
-                //Maybe disabled note section as not working
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Note")
-                    Layout.alignment: Qt.AlignRight
-                }
-                TextArea {
-                    id: noteField
-                    Layout.fillWidth: true
-                    onFocusChanged: {
-                        if (activeFocus) {
-                            makeItemVisible(noteField)
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Address")
+                        Layout.columnSpan: 2
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Street")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressWStreetField
+                        KeyNavigation.down: addressWLocalityField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressWStreetField, workScrollview)
+                            }
                         }
                     }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Locality")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressWLocalityField
+                        KeyNavigation.down: addressWRegionField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressWLocalityField, workScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Region")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressWRegionField
+                        KeyNavigation.down: addressWPostcodeField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressWRegionField, workScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Postcode")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressWPostcodeField
+                        KeyNavigation.down: addressWCountryField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressWPostcodeField, workScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Country")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressWCountryField
+                        KeyNavigation.down: addressWPostOfficeBoxField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressWCountryField, workScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Post Office Box")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressWPostOfficeBoxField
+                        KeyNavigation.down: organisationNameField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressWPostOfficeBoxField, workScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        id: organisationLabel
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Organisation")
+                        Layout.columnSpan: 2
+                    }
+                    ZoomLabel {
+                        id: organisationNameLabel
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Name")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: organisationNameField
+                        KeyNavigation.down: organisationRoleField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(organisationNameField, workScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        id: organisationRoleLabel
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Role")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: organisationRoleField
+                        KeyNavigation.down: organisationTitleField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(organisationRoleField, workScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        id: organisationTitleLabel
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Title")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: organisationTitleField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(organisationTitleField, workScrollview)
+                            }
+                        }
+                    }
+                    Item {
+                        height: app.appFontSize/2
+                        Layout.columnSpan: 2
+                    }
                 }
-                Item {
-                    height: app.appFontSize/2
-                    Layout.columnSpan: 2
+            }
+
+            ScrollView {
+                id: otherScrollview
+                width: extrasColumn.width
+                height: dialogRectangle.height - sectionButtonsRow.height
+                visible: activeSectionIndex===2
+
+                GridLayout {
+                    id: otherGrid
+                    width: otherScrollview.viewport.width
+                    columns: 2
+                    columnSpacing: app.appFontSize
+                    Layout.topMargin: app.appFontSize
+
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Mobile")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: mobileOPhoneNumberField
+                        KeyNavigation.down: voiceOPhoneNumberField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(mobileOPhoneNumberField, otherScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Voice")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: voiceOPhoneNumberField
+                        KeyNavigation.down: addressOStreetField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(voiceOPhoneNumberField, otherScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Address")
+                        Layout.columnSpan: 2
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Street")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressOStreetField
+                        KeyNavigation.down: addressOLocalityField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressOStreetField, otherScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Locality")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressOLocalityField
+                        KeyNavigation.down: addressORegionField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressOLocalityField, otherScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Region")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressORegionField
+                        KeyNavigation.down: addressOPostcodeField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressORegionField, otherScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Postcode")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressOPostcodeField
+                        KeyNavigation.down: addressOCountryField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressOPostcodeField, otherScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Country")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressOCountryField
+                        KeyNavigation.down: addressOPostOfficeBoxField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressOCountryField, otherScrollview)
+                            }
+                        }
+                    }
+                    ZoomLabel {
+                        leftPadding: app.appFontSize/2
+                        text: i18n.tr("Post Office Box")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    TextField {
+                        id: addressOPostOfficeBoxField
+                        Layout.fillWidth: true
+                        onFocusChanged: {
+                            if (activeFocus) {
+                                makeItemVisible(addressOPostOfficeBoxField, otherScrollview)
+                            }
+                        }
+                    }
+                    Item {
+                        height: app.appFontSize/2
+                        Layout.columnSpan: 2
+                    }
                 }
             }
         }
