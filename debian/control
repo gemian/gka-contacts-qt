@@ -11,7 +11,7 @@ Build-Depends:
  cmake,
  extra-cmake-modules,
  python3:any,
- qml-module-qtorganizer,
+ qml-module-qtcontacts,
  qml-module-qtquick2,
  qml-module-qttest,
  qml-module-qtquick-controls2,
