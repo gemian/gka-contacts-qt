@@ -12,7 +12,7 @@ FocusScope {
     property var contactSelected
 
     function getPhoneNumberOfType(contact, type, context) {
-        if (contact.phoneNumbers) {
+        if (contact !== undefined && contact.phoneNumbers) {
             for (var i=0; i < contact.phoneNumbers.length ; ++i) {
                 var phoneNumber = contact.phoneNumbers[i];
                 if (phoneNumber.subTypes.indexOf(type)> -1) {
@@ -39,7 +39,7 @@ FocusScope {
 
     function getAddress(contact, context) {
         var ret = "";
-        if (contact.addresses) {
+        if (contact !== undefined && contact.addresses) {
             var address = getAddressObject(contact, context)
             var parts = [address.postOfficeBox,address.street,address.locality,address.region,address.postcode,address.country];
             for (var i=0; i < parts.length ; ++i) {
@@ -57,7 +57,7 @@ FocusScope {
 
     function getOrganisation(contact) {
         var ret = "";
-        if (contact.organization && contact.organization) {
+        if (contact !== undefined && contact && contact.organization && contact.organization) {
             var parts = [contact.organization.name,contact.organization.role,contact.organization.title];
             for (var i=0; i < parts.length ; ++i) {
                 var part = parts[i];
@@ -139,47 +139,47 @@ FocusScope {
                     topPadding: app.appFontSize/2
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("First Name")
-                    visible: contactSelected !== undefined && contactSelected.name && contactSelected.name.firstName
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.firstName
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
                     id: firstNameValueLabel
                     topPadding: app.appFontSize/2
-                    visible: contactSelected !== undefined && contactSelected.name && contactSelected.name.firstName
-                    text: contactSelected !== undefined && contactSelected.name ? contactSelected.name.firstName : ""
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.firstName
+                    text: contactSelected !== undefined && contactSelected && contactSelected.name ? contactSelected.name.firstName : ""
                 }
                 ZoomLabel {
                     id: middleNameLabel
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Middle Name")
-                    visible: contactSelected !== undefined && contactSelected.name && contactSelected.name.middleName
+                    visible: middleNameValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
                     id: middleNameValueLabel
-                    visible: contactSelected !== undefined && contactSelected.name && contactSelected.name.middleName
-                    text: contactSelected !== undefined && contactSelected.name ? contactSelected.name.middleName : ""
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.middleName
+                    text: contactSelected !== undefined && contactSelected && contactSelected.name ? contactSelected.name.middleName : ""
                 }
                 ZoomLabel {
                     id: lastNameLabel
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Last Name")
-                    visible: contactSelected !== undefined && contactSelected.name && contactSelected.name.lastName
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.lastName
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
                     id: lastNameValueLabel
-                    visible: contactSelected !== undefined && contactSelected.name && contactSelected.name.lastName
-                    text: contactSelected !== undefined && contactSelected.name ? contactSelected.name.lastName : ""
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.lastName
+                    text: contactSelected !== undefined && contactSelected && contactSelected.name ? contactSelected.name.lastName : ""
                 }
                 ZoomLabel {
                     text: i18n.tr("Email")
-                    visible: contactSelected !== undefined && contactSelected.email && contactSelected.email.emailAddress
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.email && contactSelected.email.emailAddress
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
-                    visible: contactSelected !== undefined && contactSelected.email && contactSelected.email.emailAddress
-                    text: contactSelected !== undefined && contactSelected.email ? contactSelected.email.emailAddress : ""
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.email && contactSelected.email.emailAddress
+                    text: contactSelected !== undefined && contactSelected && contactSelected.email ? contactSelected.email.emailAddress : ""
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -312,54 +312,43 @@ FocusScope {
                     leftPadding: app.appFontSize/2
                     topPadding: app.appFontSize/3
                     text: i18n.tr("Personal")
-                    visible: urlLabel.visible || hobbyLabel.visible || birthdayLabel.visible || noteLabel.visible
+                    visible: urlLabel.visible || birthdayLabel.visible || noteLabel.visible
                     Layout.columnSpan: 2
                     color: "#2980b9"
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Url")
-                    visible: contactSelected && contactSelected.url && contactSelected.url.url
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.url && contactSelected.url.url
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
                     id: urlLabel
-                    visible: contactSelected !== undefined && contactSelected.url && contactSelected.url.url
-                    text: contactSelected !== undefined && contactSelected.url ? contactSelected.url.url : ""
-                }
-                ZoomLabel {
-                    leftPadding: app.appFontSize/2
-                    text: i18n.tr("Hobby")
-                    visible: contactSelected && contactSelected.hobby && contactSelected.hobby.hobby
-                    Layout.alignment: Qt.AlignRight
-                }
-                ZoomLabel {
-                    id: hobbyLabel
-                    visible: contactSelected !== undefined && contactSelected.hobby && contactSelected.hobby.hobby
-                    text: contactSelected !== undefined && contactSelected.hobby ? contactSelected.hobby.hobby : ""
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.url && contactSelected.url.url
+                    text: contactSelected !== undefined && contactSelected && contactSelected.url ? contactSelected.url.url : ""
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Birthday")
-                    visible: contactSelected && contactSelected.birthday && contactSelected.birthday.birthday.isValid()
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.birthday && contactSelected.birthday.birthday.isValid()
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
                     id: birthdayLabel
-                    visible: contactSelected !== undefined && contactSelected.birthday && contactSelected.birthday.birthday.isValid()
-                    text: contactSelected !== undefined && contactSelected.birthday ? contactSelected.birthday.birthday.toLocaleDateString(Qt.locale(), Locale.ShortFormat) : ""
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.birthday && contactSelected.birthday.birthday.isValid()
+                    text: contactSelected !== undefined && contactSelected && contactSelected.birthday ? contactSelected.birthday.birthday.toLocaleDateString(Qt.locale(), Locale.ShortFormat) : ""
                 }
                 //Disabled note section as not working
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Note")
-                    visible: contactSelected && contactSelected.note && contactSelected.note.note
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.note && contactSelected.note.note
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
                     id: noteLabel
-                    visible: contactSelected !== undefined && contactSelected.note && contactSelected.note.note
-                    text: contactSelected !== undefined && contactSelected.note ? contactSelected.note.note : ""
+                    visible: contactSelected !== undefined && contactSelected && contactSelected.note !== undefined && contactSelected.note.note
+                    text: contactSelected !== undefined && contactSelected && contactSelected.note ? contactSelected.note.note : ""
                     wrapMode: Text.Wrap
                 }
             }

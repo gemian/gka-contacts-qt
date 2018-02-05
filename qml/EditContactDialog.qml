@@ -198,8 +198,6 @@ Window {
         if (getPhoneNumberOfType(c, PhoneNumber.Voice, ContactDetail.ContextHome)) {
             voicePhoneNumberField.text = getPhoneNumberOfType(c, PhoneNumber.Voice, ContactDetail.ContextHome);
         }
-//        setAddress(contactObject, ContactDetail.ContextHome, addressStreetField, addressLocalityField, addressRegionField, addressPostcodeField, addressCountryField, addressPostOfficeBoxField);
-
 
         if (c.addresses && getAddressObject(c, ContactDetail.ContextHome)) {
             var address = getAddressObject(c, ContactDetail.ContextHome);
@@ -293,9 +291,6 @@ Window {
         if (c.url && c.url.url) {
             urlField.text = c.url.url;
         }
-        if (c.hobby && c.hobby.hobby) {
-            hobbyField.text = c.hobby.hobby;
-        }
         if (c.note && c.note.note) {
             noteField.text = c.note.note;
         }
@@ -336,7 +331,6 @@ Window {
         contactObject.organization.role = organisationRoleField.text;
         contactObject.organization.title = organisationTitleField.text;
         contactObject.url.url = urlField.text;
-        contactObject.hobby.hobby = hobbyField.text;
 
         contactObject.note.note = noteField.text;
 
@@ -672,26 +666,11 @@ Window {
                     }
                     TextField {
                         id: urlField
-                        KeyNavigation.down: hobbyField
-                        Layout.fillWidth: true
-                        onFocusChanged: {
-                            if (activeFocus) {
-                                makeItemVisible(urlField, personalScrollview)
-                            }
-                        }
-                    }
-                    ZoomLabel {
-                        leftPadding: app.appFontSize/2
-                        text: i18n.tr("Hobby")
-                        Layout.alignment: Qt.AlignRight
-                    }
-                    TextField {
-                        id: hobbyField
                         KeyNavigation.down: noteField
                         Layout.fillWidth: true
                         onFocusChanged: {
                             if (activeFocus) {
-                                makeItemVisible(hobbyField, personalScrollview)
+                                makeItemVisible(urlField, personalScrollview)
                             }
                         }
                     }

@@ -51,6 +51,5 @@ FocusScope {
     }
 
     Component.onCompleted: {
-        console.log("cditemcell.onCompleted i:"+index)
     }
 }
