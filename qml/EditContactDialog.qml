@@ -140,7 +140,7 @@ Window {
         if (contact.phoneNumbers) {
             for (var i=0; i < contact.phoneNumbers.length ; ++i) {
                 var phoneNumber = contact.phoneNumbers[i];
-                console.log(phoneNumber.number+" "+phoneNumber.contexts.indexOf(context)+ " " + context+" "+phoneNumber.subTypes.indexOf(type)+ " " + type);
+//                console.log(phoneNumber.number+" "+phoneNumber.contexts.indexOf(context)+ " " + context+" "+phoneNumber.subTypes.indexOf(type)+ " " + type);
                 if (phoneNumber.subTypes.indexOf(type)> -1) {
                     if (phoneNumber.contexts.indexOf(context)> -1 || (phoneNumber.contexts.length === 0 && context===ContactDetail.ContextHome)) {
                         return phoneNumber;
@@ -161,13 +161,13 @@ Window {
 
     function setPhoneNumberOfTypeWithField(contact, type, context, field) {
         var phone = getPhoneNumberObjectOfType(contact, type, context);
-        console.log("setPhone" + phone);
+//        console.log("setPhone" + phone);
         if (phone || field.text.length > 0) {
             if (phone) {
-                console.log("setPhone - update"+field.text);
+//                console.log("setPhone - update"+field.text);
                 phone.number = field.text;
             } else {
-                console.log("setPhone - new"+field.text);
+//                console.log("setPhone - new"+field.text);
                 phone = Qt.createQmlObject("import QtContacts 5.0; PhoneNumber {}", contact, "EditContactDialog.qml");
                 phone.number = field.text;
                 phone.subTypes = [type];

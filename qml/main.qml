@@ -47,36 +47,8 @@ ApplicationWindow {
         when: settings
     }
 
-    UnionFilter {
-        id: filter
-
-        property string searchString: ""
-
-        filters: [
-            DetailFilter {
-                detail: ContactDetail.Name
-                field: Name.FirstName
-                matchFlags: Filter.MatchContains
-                value: filter.searchString
-            },
-            DetailFilter {
-                detail: ContactDetail.Name
-                field: Name.LastName
-                matchFlags: Filter.MatchContains
-                value: filter.searchString
-            },
-            DetailFilter {
-                detail: ContactDetail.DisplayLabel
-                field: DisplayLabel.Label
-                matchFlags: Filter.MatchContains
-                value: filter.searchString
-            }
-        ]
-    }
-
     PeopleListModel {
         id: contactsModel
-        filter: filter
     }
 
     menuBar: MainMenu {

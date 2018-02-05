@@ -12,7 +12,7 @@ FocusScope {
     property var contactSelected
 
     function getPhoneNumberOfType(contact, type, context) {
-        if (contact !== undefined && contact.phoneNumbers) {
+        if (contact !== undefined && contact && contact.phoneNumbers) {
             for (var i=0; i < contact.phoneNumbers.length ; ++i) {
                 var phoneNumber = contact.phoneNumbers[i];
                 if (phoneNumber.subTypes.indexOf(type)> -1) {
@@ -39,7 +39,7 @@ FocusScope {
 
     function getAddress(contact, context) {
         var ret = "";
-        if (contact !== undefined && contact.addresses) {
+        if (contact !== undefined && contact && contact.addresses) {
             var address = getAddressObject(contact, context)
             var parts = [address.postOfficeBox,address.street,address.locality,address.region,address.postcode,address.country];
             for (var i=0; i < parts.length ; ++i) {
@@ -111,7 +111,7 @@ FocusScope {
             }
 
             Keys.onEnterPressed: {
-                filter.searchString = searchField.text
+                contactsModel.filterTerm = searchField.text
             }
         }
     }
@@ -361,8 +361,9 @@ FocusScope {
         interval: 500
         repeat: false
         onTriggered: {
-            filter.searchString = searchField.text
-            console.log("ticker"+filter.searchString)
+
+            contactsModel.filterTerm = searchField.text
+            console.log("IdleSearch"+contactsModel.filterTerm)
         }
     }
 
