@@ -7,6 +7,7 @@ import org.gka.GKAToolkit 1.0
 import "dateExt.js" as DateExt
 
 FocusScope {
+    SystemPalette { id: sysPalette; colorGroup: SystemPalette.Active }
     anchors.fill: parent
 
     property var contactSelected
@@ -93,6 +94,12 @@ FocusScope {
 
                 delegate: ContactsItem {
                 }
+
+                onFocusChanged: {
+                    if (activeFocus) {
+                        searchField.forceActiveFocus();
+                    }
+                }
             }
         }
 
@@ -121,7 +128,7 @@ FocusScope {
         x: listingColumn.width + app.appFontSize*2
         width: mainView.width - listingColumn.width - app.appFontSize*3
         height: mainView.height - app.appFontSize
-        border.color: contactGrid.activeFocus ? "black" : "grey"
+        border.color: contactGrid.activeFocus ? sysPalette.highlight : "#999"
         border.width: Math.floor(app.appFontSize/10)
         color: "#edeeef"
 
@@ -131,6 +138,7 @@ FocusScope {
 
             GridLayout {
                 id: contactGrid
+                width: personalScrollview.viewport.width - addressLabelTitle.width - app.appFontSize
                 columns: 2
                 columnSpacing: app.appFontSize
 
@@ -202,15 +210,18 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextHome)
                 }
                 ZoomLabel {
+                    id: addressLabelTitle
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Address")
                     visible: getAddress(contactSelected, ContactDetail.ContextHome)
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
+                    id: addressLabel
+                    Layout.maximumWidth: personalScrollview.viewport.width - addressLabel.x
                     visible: getAddress(contactSelected, ContactDetail.ContextHome)
                     text: getAddress(contactSelected, ContactDetail.ContextHome)
-                    wrapMode: Text.Wrap
+                    wrapMode: Label.Wrap
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -243,16 +254,18 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextWork)
                 }
                 ZoomLabel {
+                    id: workAddressLabelTitle
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Address")
-                    visible: getAddress(contactSelected, ContactDetail.ContextWork)
+                    visible: workAddressLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
                     id: workAddressLabel
+                    Layout.maximumWidth: personalScrollview.viewport.width - workAddressLabel.x
                     visible: getAddress(contactSelected, ContactDetail.ContextWork)
                     text: getAddress(contactSelected, ContactDetail.ContextWork)
-                    wrapMode: Text.Wrap
+                    wrapMode: Label.Wrap
                 }
                 ZoomLabel {
                     id: organisationLabel
@@ -297,13 +310,15 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextOther)
                 }
                 ZoomLabel {
+                    id: otherAddressLabelTitle
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Address")
-                    visible: getAddress(contactSelected, ContactDetail.ContextOther)
+                    visible: otherAddressLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
                 ZoomLabel {
                     id: otherAddressLabel
+                    Layout.maximumWidth: personalScrollview.viewport.width - otherAddressLabel.x
                     visible: getAddress(contactSelected, ContactDetail.ContextOther)
                     text: getAddress(contactSelected, ContactDetail.ContextOther)
                     wrapMode: Text.Wrap
@@ -340,6 +355,7 @@ FocusScope {
                 }
                 //Disabled note section as not working
                 ZoomLabel {
+                    id: noteLabelTitle
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Note")
                     visible: contactSelected !== undefined && contactSelected && contactSelected.note && contactSelected.note.note
@@ -347,6 +363,7 @@ FocusScope {
                 }
                 ZoomLabel {
                     id: noteLabel
+                    Layout.maximumWidth: personalScrollview.viewport.width - noteLabel.x
                     visible: contactSelected !== undefined && contactSelected && contactSelected.note !== undefined && contactSelected.note.note
                     text: contactSelected !== undefined && contactSelected && contactSelected.note ? contactSelected.note.note : ""
                     wrapMode: Text.Wrap
