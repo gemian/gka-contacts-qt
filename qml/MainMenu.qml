@@ -8,7 +8,7 @@ MenuBar {
     property var settings;
 
     Menu {
-        title: qsTr("&File")
+        title: i18n.tr("&File")
         id: fileMenu
         MenuItem {
             action: quitAction
@@ -16,11 +16,11 @@ MenuBar {
     }
 
     Menu {
-        title: qsTr("&Edit")
+        title: i18n.tr("&Edit")
         id: editMenu
         MenuItem {
             id: editMenuAdd
-            text: qsTr("&Add Item")
+            text: i18n.tr("&Add Item")
             onTriggered: {
                 dialogLoader.setSource("EditContactDialog.qml", {"model":contactsModel});
             }
@@ -31,7 +31,7 @@ MenuBar {
     }
 
     Menu {
-        title: qsTr("&View")
+        title: i18n.tr("&View")
         id: viewMenu
         MenuItem {
             action: zoomInAction
@@ -42,11 +42,11 @@ MenuBar {
     }
 
     Menu {
-        title: qsTr("&Tools")
+        title: i18n.tr("&Tools")
         id: toolsMenu
         MenuItem {
             id: toolsMenuSettings
-            text: qsTr("&Settings")
+            text: i18n.tr("&Settings")
             onTriggered: {
                 dialogLoader.setSource("SettingsDialog.qml", {"settings": menuBar.settings});
             }
