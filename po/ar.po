@@ -16,7 +16,6 @@ msgstr ""
 #: qml/MainMenu.qml:23
 msgid "&Add Item"
 msgstr "اضافة عنصر"
-msgstr ""
 
 #: qml/MainMenu.qml:19
 msgid "&Edit"
@@ -33,7 +32,6 @@ msgstr "استقال"
 #: qml/MainMenu.qml:49
 msgid "&Settings"
 msgstr "إعدادات"
-msgstr ""
 
 #: qml/MainMenu.qml:45
 msgid "&Tools"

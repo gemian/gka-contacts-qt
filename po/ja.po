@@ -24,7 +24,6 @@ msgstr "編集"
 #: qml/MainMenu.qml:11
 msgid "&File"
 msgstr "ファイル"
-msgstr ""
 
 #: qml/main.qml:62
 msgid "&Quit"

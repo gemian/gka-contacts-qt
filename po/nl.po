@@ -40,7 +40,6 @@ msgstr "&Gereedschap"
 #: qml/MainMenu.qml:34
 msgid "&View"
 msgstr "&Uitzicht"
-msgstr ""
 
 #: qml/ContactsView.qml:259 qml/ContactsView.qml:314 qml/ContactsView.qml:382
 #: qml/EditContactDialog.qml:522 qml/EditContactDialog.qml:752
