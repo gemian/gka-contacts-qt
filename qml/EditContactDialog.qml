@@ -1047,6 +1047,30 @@ Window {
             }
         }
 
+        Shortcut {
+            sequence: "Ctrl+p"
+            onActivated: {
+                setCheckedButton(0);
+                personalButton.forceActiveFocus();
+            }
+        }
+
+        Shortcut {
+            sequence: "Ctrl+w"
+            onActivated: {
+                setCheckedButton(1);
+                workButton.forceActiveFocus();
+            }
+        }
+
+        Shortcut {
+            sequence: "Ctrl+o"
+            onActivated: {
+                setCheckedButton(2);
+                otherButton.forceActiveFocus();
+            }
+        }
+
         Keys.onPressed: {
             console.log("key:"+event.key + ", aFIp:"+activeFocusItem.parent + ", aFI: "+activeFocusItem)
             if (event.key === Qt.Key_Escape) {
