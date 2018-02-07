@@ -11,8 +11,8 @@ FocusScope {
     anchors.fill: parent
 
     property var contactSelected
-    property bool pickingContact: true
-    property int gridItemSelected: 0
+    property bool pickingContact
+    property int gridItemSelected
 
     function makeItemVisible(item, scrollView) {
         if (!item) {
@@ -457,6 +457,7 @@ FocusScope {
             pickingContact = true;
         }
         if (event.key === Qt.Key_Right) {
+            firstNameValueLabel.cursorPosition = 0;
             firstNameValueLabel.forceActiveFocus();
             pickingContact = false
         }
@@ -479,12 +480,15 @@ FocusScope {
             }
         }
         if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-            dialogLoader.setSource("EditContactDialog.qml", {"model":contactsModel, "contactObject":contactSelected});
+            if (pickingContact) {
+                dialogLoader.setSource("EditContactDialog.qml", {"model":contactsModel, "contactObject":contactSelected});
+            }
         }
     }
 
     Component.onCompleted: {
         searchField.forceActiveFocus();
+        pickingContact = true;
 
         contactsModel.fetchCollections();
 

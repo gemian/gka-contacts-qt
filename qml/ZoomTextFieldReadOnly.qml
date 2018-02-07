@@ -18,4 +18,15 @@ TextField {
             makeItemVisible(control, personalScrollview)
         }
     }
+
+    Rectangle {
+        id: cursorIndicator
+        x: cursorRectangle.x
+        y: cursorRectangle.y
+        width: cursorRectangle.width
+        height: cursorRectangle.height
+        visible: control.activeFocus
+        color: "#353637"
+        border.color: sysPalette.highlight
+    }
 }
