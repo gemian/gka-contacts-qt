@@ -268,6 +268,12 @@ FocusScope {
                     wrapMode: Label.Wrap
                     KeyNavigation.down: workMobileValueLabel
                     KeyNavigation.right: searchField
+                    Keys.onPressed: {
+                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+                            var url = "https://www.openstreetmap.org/search?query=" + addressValueLabel.text;
+                            Qt.openUrlExternally(url);
+                        }
+                    }
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -317,6 +323,12 @@ FocusScope {
                     wrapMode: Label.Wrap
                     KeyNavigation.down: organisationValueLabel
                     KeyNavigation.right: searchField
+                    Keys.onPressed: {
+                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+                            var url = "https://www.openstreetmap.org/search?query=" + workAddressValueLabel.text;
+                            Qt.openUrlExternally(url);
+                        }
+                    }
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -379,6 +391,12 @@ FocusScope {
                     wrapMode: Text.Wrap
                     KeyNavigation.down: urlValueLabel
                     KeyNavigation.right: searchField
+                    Keys.onPressed: {
+                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+                            var url = "https://www.openstreetmap.org/search?query=" + otherAddressValueLabel.text;
+                            Qt.openUrlExternally(url);
+                        }
+                    }
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -400,6 +418,15 @@ FocusScope {
                     text: contactSelected !== undefined && contactSelected && contactSelected.url ? contactSelected.url.url : ""
                     KeyNavigation.down: birthdayValueLabel
                     KeyNavigation.right: searchField
+                    Keys.onPressed: {
+                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+                            var url = urlValueLabel.text;
+                            if (text.indexOf("http") < 0) {
+                                url = "http://"+url;
+                            }
+                            Qt.openUrlExternally(url);
+                        }
+                    }
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
