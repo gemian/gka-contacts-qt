@@ -693,6 +693,14 @@ Window {
                         height: app.appFontSize/2
                         Layout.columnSpan: 2
                     }
+                    Keys.onReturnPressed: {
+                        for (var i = 0; i < children.length; ++i) {
+                            if (children[i].focus) {
+                                children[i].nextItemInFocusChain().forceActiveFocus();
+                                break;
+                            }
+                        }
+                    }
                 }
             }
 

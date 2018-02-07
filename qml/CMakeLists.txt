@@ -9,6 +9,7 @@ configure_file(ContactsItem.qml ContactsItem.qml COPYONLY)
 configure_file(ZoomButton.qml ZoomButton.qml COPYONLY)
 configure_file(ZoomLabel.qml ZoomLabel.qml COPYONLY)
 configure_file(ZoomCheckBox.qml ZoomCheckBox.qml COPYONLY)
+configure_file(ZoomTextFieldReadOnly.qml ZoomTextFieldReadOnly.qml COPYONLY)
 configure_file(ZoomRadioButton.qml ZoomRadioButton.qml COPYONLY)
 configure_file(ZoomCalendar.qml ZoomCalendar.qml COPYONLY)
 

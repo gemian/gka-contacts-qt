@@ -11,6 +11,35 @@ FocusScope {
     anchors.fill: parent
 
     property var contactSelected
+    property bool pickingContact: true
+    property int gridItemSelected: 0
+
+    function makeItemVisible(item, scrollView) {
+        if (!item) {
+            return;
+        }
+
+        // check if visible
+        var bottomY = scrollView.flickableItem.contentY + scrollView.flickableItem.height
+        var itemBottom = item.y + (item.height * 3)
+        if (item.y >= scrollView.flickableItem.contentY && itemBottom <= bottomY) {
+            return;
+        }
+
+        // if it is not, try to scroll and make it visible
+        var targetY = itemBottom - scrollView.flickableItem.height
+        if (targetY >= 0 && item.y) {
+            if (targetY > scrollView.contentItem.height-scrollView.flickableItem.height) {
+                targetY = scrollView.contentItem.height-scrollView.flickableItem.height;
+            }
+            scrollView.flickableItem.contentY = targetY;
+        } else if (item.y < scrollView.flickableItem.contentY) {
+            // if it is hidden at the top, also show it
+            scrollView.flickableItem.contentY = item.y-app.appFontSize/2;
+        }
+
+        scrollView.flickableItem.returnToBounds();
+    }
 
     function getPhoneNumberOfType(contact, type, context) {
         if (contact !== undefined && contact && contact.phoneNumbers) {
@@ -117,6 +146,10 @@ FocusScope {
                 idleSearch.restart()
             }
 
+            onFocusChanged: {
+                pickingContact = activeFocus;
+            }
+
             Keys.onEnterPressed: {
                 contactsModel.filterTerm = searchField.text
             }
@@ -138,152 +171,171 @@ FocusScope {
 
             GridLayout {
                 id: contactGrid
-                width: personalScrollview.viewport.width - addressLabelTitle.width - app.appFontSize
+                width: personalScrollview.viewport.width - app.appFontSize
                 columns: 2
-                columnSpacing: app.appFontSize
+                columnSpacing: 1//app.appFontSize
 
                 ZoomLabel {
                     id: firstNameLabel
                     topPadding: app.appFontSize/2
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("First Name")
-                    visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.firstName
+                    visible: firstNameValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
+                ZoomTextFieldReadOnly {
                     id: firstNameValueLabel
-                    topPadding: app.appFontSize/2
                     visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.firstName
                     text: contactSelected !== undefined && contactSelected && contactSelected.name ? contactSelected.name.firstName : ""
+                    KeyNavigation.down: middleNameValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
-                    id: middleNameLabel
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Middle Name")
                     visible: middleNameValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
+                ZoomTextFieldReadOnly {
                     id: middleNameValueLabel
                     visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.middleName
                     text: contactSelected !== undefined && contactSelected && contactSelected.name ? contactSelected.name.middleName : ""
+                    KeyNavigation.down: lastNameValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
-                    id: lastNameLabel
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Last Name")
-                    visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.lastName
+                    visible: lastNameValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
+                ZoomTextFieldReadOnly {
                     id: lastNameValueLabel
                     visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.lastName
                     text: contactSelected !== undefined && contactSelected && contactSelected.name ? contactSelected.name.lastName : ""
+                    KeyNavigation.down: emailValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
                     text: i18n.tr("Email")
-                    visible: contactSelected !== undefined && contactSelected && contactSelected.email && contactSelected.email.emailAddress
+                    visible: emailValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
+                ZoomTextFieldReadOnly {
+                    id: emailValueLabel
                     visible: contactSelected !== undefined && contactSelected && contactSelected.email && contactSelected.email.emailAddress
                     text: contactSelected !== undefined && contactSelected && contactSelected.email ? contactSelected.email.emailAddress : ""
+                    KeyNavigation.down: homePhoneValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Mobile")
-                    visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextHome)
+                    visible: homePhoneValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
+                ZoomTextFieldReadOnly {
+                    id: homePhoneValueLabel
                     visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextHome)
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextHome)
+                    KeyNavigation.down: homeVoiceValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Voice")
-                    visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextHome)
+                    visible: homeVoiceValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
+                ZoomTextFieldReadOnly {
+                    id: homeVoiceValueLabel
                     visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextHome)
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextHome)
+                    KeyNavigation.down: addressValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
-                    id: addressLabelTitle
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Address")
-                    visible: getAddress(contactSelected, ContactDetail.ContextHome)
+                    visible:addressValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: addressLabel
-                    Layout.maximumWidth: personalScrollview.viewport.width - addressLabel.x
+                ZoomTextFieldReadOnly {
+                    id: addressValueLabel
+                    implicitWidth: personalScrollview.viewport.width - addressValueLabel.x
                     visible: getAddress(contactSelected, ContactDetail.ContextHome)
                     text: getAddress(contactSelected, ContactDetail.ContextHome)
                     wrapMode: Label.Wrap
+                    KeyNavigation.down: workMobileValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     topPadding: app.appFontSize/3
                     text: i18n.tr("Work")
-                    visible: workMobileLabel.visible || workVoiceLabel.visible || workAddressLabel.visible || organisationValueLabel.visible
+                    visible: workMobileValueLabel.visible || workVoiceValueLabel.visible || workAddressValueLabel.visible || organisationValueLabel.visible
                     Layout.columnSpan: 2
                     color: "#2980b9"
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Mobile")
-                    visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextWork)
+                    visible: workMobileValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: workMobileLabel
+                ZoomTextFieldReadOnly {
+                    id: workMobileValueLabel
                     visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextWork)
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextWork)
+                    KeyNavigation.down: workVoiceValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Voice")
-                    visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextWork)
+                    visible: workVoiceValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: workVoiceLabel
+                ZoomTextFieldReadOnly {
+                    id: workVoiceValueLabel
                     visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextWork)
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextWork)
+                    KeyNavigation.down: workAddressValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
-                    id: workAddressLabelTitle
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Address")
-                    visible: workAddressLabel.visible
+                    visible: workAddressValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: workAddressLabel
-                    Layout.maximumWidth: personalScrollview.viewport.width - workAddressLabel.x
+                ZoomTextFieldReadOnly {
+                    id: workAddressValueLabel
+                    implicitWidth: personalScrollview.viewport.width - workAddressValueLabel.x
                     visible: getAddress(contactSelected, ContactDetail.ContextWork)
                     text: getAddress(contactSelected, ContactDetail.ContextWork)
                     wrapMode: Label.Wrap
+                    KeyNavigation.down: organisationValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
-                    id: organisationLabel
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Organisation")
-                    visible: getOrganisation(contactSelected)
+                    visible: organisationValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
+                ZoomTextFieldReadOnly {
                     id: organisationValueLabel
                     visible: getOrganisation(contactSelected)
                     text: getOrganisation(contactSelected)
+                    KeyNavigation.down: otherMobileValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     topPadding: app.appFontSize/3
                     text: i18n.tr("Other")
-                    visible: otherMobileLabel.visible || otherVoiceLabel.visible || otherAddressLabel.visible
+                    visible: otherMobileValueLabel.visible || otherVoiceValueLabel.visible || otherAddressValueLabel.visible
                     Layout.columnSpan: 2
                     color: "#2980b9"
                 }
@@ -293,80 +345,89 @@ FocusScope {
                     visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextOther)
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: otherMobileLabel
+                ZoomTextFieldReadOnly {
+                    id: otherMobileValueLabel
                     visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextOther)
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextOther)
+                    KeyNavigation.down: otherVoiceValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Voice")
-                    visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextOther)
+                    visible: otherVoiceValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: otherVoiceLabel
+                ZoomTextFieldReadOnly {
+                    id: otherVoiceValueLabel
                     visible: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextOther)
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextOther)
+                    KeyNavigation.down: otherAddressValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
-                    id: otherAddressLabelTitle
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Address")
-                    visible: otherAddressLabel.visible
+                    visible: otherAddressValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: otherAddressLabel
-                    Layout.maximumWidth: personalScrollview.viewport.width - otherAddressLabel.x
+                ZoomTextFieldReadOnly {
+                    id: otherAddressValueLabel
+                    implicitWidth: personalScrollview.viewport.width - otherAddressValueLabel.x
                     visible: getAddress(contactSelected, ContactDetail.ContextOther)
                     text: getAddress(contactSelected, ContactDetail.ContextOther)
                     wrapMode: Text.Wrap
+                    KeyNavigation.down: urlValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     topPadding: app.appFontSize/3
                     text: i18n.tr("Personal")
-                    visible: urlLabel.visible || birthdayLabel.visible || noteLabel.visible
+                    visible: urlValueLabel.visible || birthdayValueLabel.visible || noteValueLabel.visible
                     Layout.columnSpan: 2
                     color: "#2980b9"
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Url")
-                    visible: contactSelected !== undefined && contactSelected && contactSelected.url && contactSelected.url.url
+                    visible: urlValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: urlLabel
+                ZoomTextFieldReadOnly {
+                    id: urlValueLabel
                     visible: contactSelected !== undefined && contactSelected && contactSelected.url && contactSelected.url.url
                     text: contactSelected !== undefined && contactSelected && contactSelected.url ? contactSelected.url.url : ""
+                    KeyNavigation.down: birthdayValueLabel
+                    KeyNavigation.right: searchField
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Birthday")
-                    visible: contactSelected !== undefined && contactSelected && contactSelected.birthday && contactSelected.birthday.birthday.isValid()
+                    visible: birthdayValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: birthdayLabel
+                ZoomTextFieldReadOnly {
+                    id: birthdayValueLabel
                     visible: contactSelected !== undefined && contactSelected && contactSelected.birthday && contactSelected.birthday.birthday.isValid()
                     text: contactSelected !== undefined && contactSelected && contactSelected.birthday ? contactSelected.birthday.birthday.toLocaleDateString(Qt.locale(), Locale.ShortFormat) : ""
+                    KeyNavigation.down: noteValueLabel
+                    KeyNavigation.right: searchField
                 }
                 //Disabled note section as not working
                 ZoomLabel {
-                    id: noteLabelTitle
                     leftPadding: app.appFontSize/2
                     text: i18n.tr("Note")
-                    visible: contactSelected !== undefined && contactSelected && contactSelected.note && contactSelected.note.note
+                    visible: noteValueLabel.visible
                     Layout.alignment: Qt.AlignRight
                 }
-                ZoomLabel {
-                    id: noteLabel
-                    Layout.maximumWidth: personalScrollview.viewport.width - noteLabel.x
+                ZoomTextFieldReadOnly {
+                    id: noteValueLabel
+                    implicitWidth: personalScrollview.viewport.width - noteValueLabel.x
                     visible: contactSelected !== undefined && contactSelected && contactSelected.note !== undefined && contactSelected.note.note
                     text: contactSelected !== undefined && contactSelected && contactSelected.note ? contactSelected.note.note : ""
                     wrapMode: Text.Wrap
+                    KeyNavigation.right: searchField
                 }
             }
         }
@@ -393,12 +454,14 @@ FocusScope {
         console.log("key:"+event.key + ", aFIp:"+activeFocusItem.parent + ", aFI: "+activeFocusItem)
         if (event.key === Qt.Key_Left) {
             searchField.forceActiveFocus();
+            pickingContact = true;
         }
         if (event.key === Qt.Key_Right) {
-            contactGrid.forceActiveFocus();
+            firstNameValueLabel.forceActiveFocus();
+            pickingContact = false
         }
         if (event.key === Qt.Key_Up) {
-            if (contactGrid.activeFocus) {
+            if (!pickingContact) {
 
             } else {
                 if (contactsListView.currentIndex > 0) {
@@ -407,7 +470,7 @@ FocusScope {
             }
         }
         if (event.key === Qt.Key_Down) {
-            if (contactGrid.activeFocus) {
+            if (!pickingContact) {
 
             } else {
                 if (contactsListView.currentIndex < contactsListView.count-1) {
