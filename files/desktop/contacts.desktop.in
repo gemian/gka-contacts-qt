@@ -7,3 +7,4 @@ Icon=gka-contacts-qt
 TryExec=gka-contacts-qt
 Exec=gka-contacts-qt
 Categories=Office;Contacts;
+MimeType=application/vnd.contact;x-scheme-handler/contact;
