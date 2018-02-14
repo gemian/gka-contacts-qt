@@ -29,4 +29,18 @@ TextField {
         color: "#353637"
         border.color: sysPalette.highlight
     }
+
+    Triangle {
+        id: arrow
+        color: sysPalette.highlight
+        fill: true
+        visible: control.activeFocus
+        height: app.appFontSize*0.75
+        width: app.appFontSize*0.5
+        anchors {
+            verticalCenter: parent.verticalCenter
+            left: parent.left
+            leftMargin: app.appFontSize*0.25
+        }
+    }
 }
