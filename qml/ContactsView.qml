@@ -228,6 +228,7 @@ FocusScope {
                     text: contactSelected !== undefined && contactSelected && contactSelected.email ? contactSelected.email.emailAddress : ""
                     KeyNavigation.down: homePhoneValueLabel
                     KeyNavigation.right: searchField
+                    urlOpenList: [UrlTypeExt.UrlType.Email]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -293,7 +294,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextWork)
                     KeyNavigation.down: workVoiceValueLabel
                     KeyNavigation.right: searchField
-                    urlOpenList: [UrlType.Dialer, UrlType.Message]
+                    urlOpenList: [UrlTypeExt.UrlType.Dialer, UrlTypeExt.UrlType.Message]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -307,7 +308,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextWork)
                     KeyNavigation.down: workAddressValueLabel
                     KeyNavigation.right: searchField
-                    urlOpenList: [UrlType.Dialer]
+                    urlOpenList: [UrlTypeExt.UrlType.Dialer]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -323,7 +324,7 @@ FocusScope {
                     wrapMode: Label.Wrap
                     KeyNavigation.down: organisationValueLabel
                     KeyNavigation.right: searchField
-                    urlOpenList: [UrlType.Address]
+                    urlOpenList: [UrlTypeExt.UrlType.Address]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -358,7 +359,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextOther)
                     KeyNavigation.down: otherVoiceValueLabel
                     KeyNavigation.right: searchField
-                    urlOpenList: [UrlType.Dialer, UrlType.Message]
+                    urlOpenList: [UrlTypeExt.UrlType.Dialer, UrlTypeExt.UrlType.Message]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -372,7 +373,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextOther)
                     KeyNavigation.down: otherAddressValueLabel
                     KeyNavigation.right: searchField
-                    urlOpenList: [UrlType.Dialer]
+                    urlOpenList: [UrlTypeExt.UrlType.Dialer]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -388,7 +389,7 @@ FocusScope {
                     wrapMode: Text.Wrap
                     KeyNavigation.down: urlValueLabel
                     KeyNavigation.right: searchField
-                    urlOpenList: [UrlType.Address]
+                    urlOpenList: [UrlTypeExt.UrlType.Address]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -410,7 +411,7 @@ FocusScope {
                     text: contactSelected !== undefined && contactSelected && contactSelected.url ? contactSelected.url.url : ""
                     KeyNavigation.down: birthdayValueLabel
                     KeyNavigation.right: searchField
-                    urlOpenList: [UrlType.Url]
+                    urlOpenList: [UrlTypeExt.UrlType.Url]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
