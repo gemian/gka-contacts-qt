@@ -271,7 +271,8 @@ FocusScope {
                     Keys.onPressed: {
                         if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
                             var url = "https://www.openstreetmap.org/search?query=" + addressValueLabel.text;
-                            Qt.openUrlExternally(url);
+                            var ret = Qt.openUrlExternally(url);
+                            console.log("url open:"+url+", result:"+ret);
                         }
                     }
                 }
@@ -295,6 +296,13 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextWork)
                     KeyNavigation.down: workVoiceValueLabel
                     KeyNavigation.right: searchField
+                    Keys.onPressed: {
+                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+                            var url = "message:" + workMobileValueLabel.text;
+                            var ret = Qt.openUrlExternally(url);
+                            console.log("url open:"+url+", result:"+ret);
+                        }
+                    }
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -308,6 +316,13 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextWork)
                     KeyNavigation.down: workAddressValueLabel
                     KeyNavigation.right: searchField
+                    Keys.onPressed: {
+                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+                            var url = "tel:" + workVoiceValueLabel.text;
+                            var ret = Qt.openUrlExternally(url);
+                            console.log("url open:"+url+", result:"+ret);
+                        }
+                    }
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2

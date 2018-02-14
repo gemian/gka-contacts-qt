@@ -17,8 +17,6 @@ FocusScope {
             contactsListView.currentIndex = index;
             contactsListView.currentItem.forceActiveFocus();
             contactSelected = contact;
-
-            console.log("Note: "+contactSelected.note.note);
         }
     }
 
