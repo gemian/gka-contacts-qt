@@ -1,26 +1,9 @@
-configure_file(dateExt.js dateExt.js COPYONLY)
-configure_file(ColorUtils.js ColorUtils.js COPYONLY)
-configure_file(main.qml main.qml COPYONLY)
-configure_file(MainMenu.qml MainMenu.qml COPYONLY)
-configure_file(PeopleListModel.qml PeopleListModel.qml COPYONLY)
-configure_file(EditContactDialog.qml EditContactDialog.qml COPYONLY)
-configure_file(ContactsView.qml ContactsView.qml COPYONLY)
-configure_file(ContactsItem.qml ContactsItem.qml COPYONLY)
-configure_file(ZoomButton.qml ZoomButton.qml COPYONLY)
-configure_file(ZoomLabel.qml ZoomLabel.qml COPYONLY)
-configure_file(ZoomCheckBox.qml ZoomCheckBox.qml COPYONLY)
-configure_file(ZoomTextFieldReadOnly.qml ZoomTextFieldReadOnly.qml COPYONLY)
-configure_file(ZoomRadioButton.qml ZoomRadioButton.qml COPYONLY)
-configure_file(ZoomCalendar.qml ZoomCalendar.qml COPYONLY)
+file(GLOB QML_JS_FILES *.qml *.js)
 
-file(GLOB JS_FILES *.js)
-file(GLOB QML_FILES *.qml)
+# make the files visible on qtcreator
+add_custom_target(CONTACTS_QMLFiles ALL SOURCES ${QML_JS_FILES})
 
-foreach(JS_FILE ${JS_FILES})
-        install(FILES ${JS_FILE} DESTINATION ${KDE_INSTALL_QMLDIR}/org/gka/contacts-qt)
-endforeach(JS_FILE)
-
-foreach(QML_FILE ${QML_FILES})
-        install(FILES ${QML_FILE} DESTINATION ${KDE_INSTALL_QMLDIR}/org/gka/contacts-qt)
-endforeach(QML_FILE)
+foreach(QML_JS_FILE ${QML_JS_FILES})
+        install(FILES ${QML_JS_FILE} DESTINATION ${KDE_INSTALL_QMLDIR}/org/gka/contacts-qt)
+endforeach(QML_JS_FILE)
 
