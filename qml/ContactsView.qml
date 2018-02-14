@@ -5,6 +5,7 @@ import QtQuick.Window 2.2
 import QtQuick.Controls 1.4
 import org.gka.GKAToolkit 1.0
 import "dateExt.js" as DateExt
+import "urlType.js" as UrlTypeExt
 
 FocusScope {
     SystemPalette { id: sysPalette; colorGroup: SystemPalette.Active }
@@ -104,15 +105,15 @@ FocusScope {
 
     Column {
         id: listingColumn
-        spacing: app.appFontSize
+        spacing: app.appFontSize/3
+        topPadding: app.appFontSize/3
 
         Rectangle {
             border.color: "black"
             border.width: Math.floor(app.appFontSize/10)
-            width: (mainView.width/3)-app.appFontSize
-            height: mainView.height - searchField.height - app.appFontSize*2
-            x: app.appFontSize
-            y: app.appFontSize
+            width: (mainView.width/3)-(app.appFontSize/3)
+            height: mainView.height - searchField.height - app.appFontSize
+            x: app.appFontSize/3
 
             ListView {
                 id: contactsListView
@@ -134,11 +135,9 @@ FocusScope {
 
         TextField {
             id: searchField
-            anchors {
-                leftMargin: app.appFontSize
-                left: parent.left
-                right: parent.right
-            }
+            width: (mainView.width/3)-(app.appFontSize/3)
+            x: app.appFontSize/3
+
             placeholderText: i18n.tr("Filter Contacts")
             font.pixelSize: app.appFontSize
 
@@ -158,9 +157,10 @@ FocusScope {
 
     Rectangle {
         id: contactsRectangle
-        x: listingColumn.width + app.appFontSize*2
-        width: mainView.width - listingColumn.width - app.appFontSize*3
-        height: mainView.height - app.appFontSize
+        x: listingColumn.width + app.appFontSize*(2/3)
+        y: app.appFontSize/3
+        width: mainView.width - listingColumn.width - app.appFontSize
+        height: mainView.height - app.appFontSize*(2/3)
         border.color: contactGrid.activeFocus ? sysPalette.highlight : "#999"
         border.width: Math.floor(app.appFontSize/10)
         color: "#edeeef"
@@ -185,6 +185,7 @@ FocusScope {
                 }
                 ZoomTextFieldReadOnly {
                     id: firstNameValueLabel
+                    topPadding: app.appFontSize/2
                     visible: contactSelected !== undefined && contactSelected && contactSelected.name && contactSelected.name.firstName
                     text: contactSelected !== undefined && contactSelected && contactSelected.name ? contactSelected.name.firstName : ""
                     KeyNavigation.down: middleNameValueLabel
@@ -240,6 +241,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextHome)
                     KeyNavigation.down: homeVoiceValueLabel
                     KeyNavigation.right: searchField
+                    urlOpenList: [UrlTypeExt.UrlType.Dialer, UrlTypeExt.UrlType.Message]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -253,6 +255,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextHome)
                     KeyNavigation.down: addressValueLabel
                     KeyNavigation.right: searchField
+                    urlOpenList: [UrlTypeExt.UrlType.Dialer]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -268,13 +271,7 @@ FocusScope {
                     wrapMode: Label.Wrap
                     KeyNavigation.down: workMobileValueLabel
                     KeyNavigation.right: searchField
-                    Keys.onPressed: {
-                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-                            var url = "https://www.openstreetmap.org/search?query=" + addressValueLabel.text;
-                            var ret = Qt.openUrlExternally(url);
-                            console.log("url open:"+url+", result:"+ret);
-                        }
-                    }
+                    urlOpenList: [UrlTypeExt.UrlType.Address]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -296,13 +293,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextWork)
                     KeyNavigation.down: workVoiceValueLabel
                     KeyNavigation.right: searchField
-                    Keys.onPressed: {
-                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-                            var url = "message:" + workMobileValueLabel.text;
-                            var ret = Qt.openUrlExternally(url);
-                            console.log("url open:"+url+", result:"+ret);
-                        }
-                    }
+                    urlOpenList: [UrlType.Dialer, UrlType.Message]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -316,13 +307,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextWork)
                     KeyNavigation.down: workAddressValueLabel
                     KeyNavigation.right: searchField
-                    Keys.onPressed: {
-                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-                            var url = "tel:" + workVoiceValueLabel.text;
-                            var ret = Qt.openUrlExternally(url);
-                            console.log("url open:"+url+", result:"+ret);
-                        }
-                    }
+                    urlOpenList: [UrlType.Dialer]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -338,12 +323,7 @@ FocusScope {
                     wrapMode: Label.Wrap
                     KeyNavigation.down: organisationValueLabel
                     KeyNavigation.right: searchField
-                    Keys.onPressed: {
-                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-                            var url = "https://www.openstreetmap.org/search?query=" + workAddressValueLabel.text;
-                            Qt.openUrlExternally(url);
-                        }
-                    }
+                    urlOpenList: [UrlType.Address]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -378,6 +358,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Mobile, ContactDetail.ContextOther)
                     KeyNavigation.down: otherVoiceValueLabel
                     KeyNavigation.right: searchField
+                    urlOpenList: [UrlType.Dialer, UrlType.Message]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -391,6 +372,7 @@ FocusScope {
                     text: getPhoneNumberOfType(contactSelected, PhoneNumber.Voice, ContactDetail.ContextOther)
                     KeyNavigation.down: otherAddressValueLabel
                     KeyNavigation.right: searchField
+                    urlOpenList: [UrlType.Dialer]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -406,12 +388,7 @@ FocusScope {
                     wrapMode: Text.Wrap
                     KeyNavigation.down: urlValueLabel
                     KeyNavigation.right: searchField
-                    Keys.onPressed: {
-                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-                            var url = "https://www.openstreetmap.org/search?query=" + otherAddressValueLabel.text;
-                            Qt.openUrlExternally(url);
-                        }
-                    }
+                    urlOpenList: [UrlType.Address]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
@@ -433,15 +410,7 @@ FocusScope {
                     text: contactSelected !== undefined && contactSelected && contactSelected.url ? contactSelected.url.url : ""
                     KeyNavigation.down: birthdayValueLabel
                     KeyNavigation.right: searchField
-                    Keys.onPressed: {
-                        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-                            var url = urlValueLabel.text;
-                            if (text.indexOf("http") < 0) {
-                                url = "http://"+url;
-                            }
-                            Qt.openUrlExternally(url);
-                        }
-                    }
+                    urlOpenList: [UrlType.Url]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
