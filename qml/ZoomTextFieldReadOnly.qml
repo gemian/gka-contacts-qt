@@ -101,9 +101,10 @@ TextField {
         }
     }
 
-    ZoomLabel {
+    Label {
+        font.pixelSize: app.appFontSize/2
         color: "grey"
-        text: urlOpenList ? ((urlOpenList.length > 0 ? labelForIndex(0) + " (Enter)" : "") + (urlOpenList.length > 1 ? ", "+labelForIndex(1) + " (Space) " : "")) : ""
+        text: urlOpenList ? ((urlOpenList.length > 0 ? labelForIndex(0) + " (Enter)" : "") + (urlOpenList.length > 1 ? "\n"+labelForIndex(1) + " (Space) " : "")) : ""
         anchors {
             verticalCenter: parent.verticalCenter
             left: parent.right
