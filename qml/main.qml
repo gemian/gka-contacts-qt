@@ -65,9 +65,18 @@ ApplicationWindow {
     }
 
     Action {
+        id: addAction
+        text: i18n.tr("&Add")
+        shortcut: "Ctrl+Shift+a"
+        onTriggered: {
+            dialogLoader.setSource("EditContactDialog.qml", {"model":contactsModel});
+        }
+    }
+
+    Action {
         id: editSelectedAction
         text: i18n.tr("&Edit")
-        shortcut: "Ctrl+e"
+        shortcut: "Ctrl+Shift+e"
         enabled: contactsView.contactSelected !== undefined
         onTriggered: {
             dialogLoader.setSource("EditContactDialog.qml", {"model":contactsModel, "contactObject":contactsView.contactSelected});
@@ -77,7 +86,7 @@ ApplicationWindow {
     Action {
         id: deleteSelectedAction
         text: i18n.tr("&Delete")
-        shortcut: "Ctrl+d"
+        shortcut: "Ctrl+Shift+d"
         enabled: contactsView.contactSelected !== undefined
         onTriggered: {
             dialogLoader.setSource("DeleteDialog.qml", {"model":contactsModel, "contactObject":contactsView.contactSelected});

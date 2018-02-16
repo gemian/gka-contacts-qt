@@ -19,11 +19,7 @@ MenuBar {
         title: i18n.tr("&Edit")
         id: editMenu
         MenuItem {
-            id: editMenuAdd
-            text: i18n.tr("&Add Item")
-            onTriggered: {
-                dialogLoader.setSource("EditContactDialog.qml", {"model":contactsModel});
-            }
+            action: addAction
         }
         MenuItem {
             action: editSelectedAction
