@@ -65,6 +65,26 @@ ApplicationWindow {
     }
 
     Action {
+        id: editSelectedAction
+        text: i18n.tr("&Edit")
+        shortcut: "Ctrl+e"
+        enabled: contactsView.contactSelected !== undefined
+        onTriggered: {
+            dialogLoader.setSource("EditContactDialog.qml", {"model":contactsModel, "contactObject":contactsView.contactSelected});
+        }
+    }
+
+    Action {
+        id: deleteSelectedAction
+        text: i18n.tr("&Delete")
+        shortcut: "Ctrl+d"
+        enabled: contactsView.contactSelected !== undefined
+        onTriggered: {
+            dialogLoader.setSource("DeleteDialog.qml", {"model":contactsModel, "contactObject":contactsView.contactSelected});
+        }
+    }
+
+    Action {
         id: zoomOutAction
         text: i18n.tr("Zoom &Out")
         shortcut: "Ctrl+Shift+m"
@@ -95,10 +115,8 @@ ApplicationWindow {
         id: mainView
         anchors.fill: parent
 
-        Loader {
-            id: alternateViewLoader
-            source: "ContactsView.qml"
-            visible: status == Loader.Ready
+        ContactsView {
+            id: contactsView
         }
 
         Loader {

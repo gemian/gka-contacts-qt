@@ -25,6 +25,13 @@ MenuBar {
                 dialogLoader.setSource("EditContactDialog.qml", {"model":contactsModel});
             }
         }
+        MenuItem {
+            action: editSelectedAction
+        }
+        MenuItem {
+            action: deleteSelectedAction
+        }
+//--
 //        MenuItem {
 //            action: collectionsDialogAction
 //        }
@@ -41,15 +48,15 @@ MenuBar {
         }
     }
 
-    Menu {
-        title: i18n.tr("&Tools")
-        id: toolsMenu
-        MenuItem {
-            id: toolsMenuSettings
-            text: i18n.tr("&Settings")
-            onTriggered: {
-                dialogLoader.setSource("SettingsDialog.qml", {"settings": menuBar.settings});
-            }
-        }
-    }
+//    Menu {
+//        title: i18n.tr("&Tools")
+//        id: toolsMenu
+//        MenuItem {
+//            id: toolsMenuSettings
+//            text: i18n.tr("&Settings")
+//            onTriggered: {
+//                dialogLoader.setSource("SettingsDialog.qml", {"settings": menuBar.settings});
+//            }
+//        }
+//    }
 }
