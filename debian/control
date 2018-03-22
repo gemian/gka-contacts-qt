@@ -3,8 +3,8 @@ Section: misc
 Priority: extra
 Maintainer: Adam Boardman <adamboardman@gmail.com>
 Standards-Version: 3.9.8
-Homepage: https://github.com/adamboardman/gka-contacts-qt
-Vcs-Git: https://github.com/adamboardman/gka-contacts-qt.git
+Homepage: https://github.com/gemian/gka-contacts-qt
+Vcs-Git: https://github.com/gemian/gka-contacts-qt.git
 Build-Depends:
  debhelper (>= 9),
  intltool,
@@ -42,7 +42,7 @@ Depends:
  qml-module-qtquick-controls2,
  qml-module-qtquick-templates2,
  libqt5quickcontrols2-5,
- qtorganizer5-eds,
+ qtcontact5-galera,
  gka-toolkit-qt,
 Description: Contacts application for touch+mouse+keyboard operation
  The Contacts application gives easy access to contacts.
