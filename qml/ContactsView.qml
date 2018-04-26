@@ -56,6 +56,18 @@ FocusScope {
         return false;
     }
 
+    function getEmail(contact, context) {
+        if (contact !== undefined && contact && contact.emails) {
+            for (var i=0; i < contact.emails.length ; ++i) {
+                var email = contact.emails[i];
+                if (email.contexts.indexOf(context)> -1 || (email.contexts.length === 0 && context===ContactDetail.ContextHome)) {
+                    return email.emailAddress;
+                }
+            }
+        }
+        return false;
+    }
+
     function getAddressObject(contact, context) {
         if (contact.addresses) {
             for (var i=0; i < contact.addresses.length ; ++i) {
@@ -270,7 +282,7 @@ FocusScope {
                     visible: getAddress(contactSelected, ContactDetail.ContextHome)
                     text: getAddress(contactSelected, ContactDetail.ContextHome)
                     wrapMode: Label.Wrap
-                    KeyNavigation.down: workMobileValueLabel
+                    KeyNavigation.down: workEmailValueLabel
                     KeyNavigation.right: searchField
                     urlOpenList: [UrlTypeExt.UrlType.Address]
                 }
@@ -278,9 +290,22 @@ FocusScope {
                     leftPadding: app.appFontSize/2
                     topPadding: app.appFontSize/3
                     text: i18n.tr("Work")
-                    visible: workMobileValueLabel.visible || workVoiceValueLabel.visible || workAddressValueLabel.visible || organisationValueLabel.visible
+                    visible: workEmailValueLabel.visible || workMobileValueLabel.visible || workVoiceValueLabel.visible || workAddressValueLabel.visible || organisationValueLabel.visible
                     Layout.columnSpan: 2
                     color: "#2980b9"
+                }
+                ZoomLabel {
+                    text: i18n.tr("Email")
+                    visible: workEmailValueLabel.visible
+                    Layout.alignment: Qt.AlignRight
+                }
+                ZoomTextFieldReadOnly {
+                    id: workEmailValueLabel
+                    visible: getEmail(contactSelected, ContactDetail.ContextWork)
+                    text: getEmail(contactSelected, ContactDetail.ContextWork)
+                    KeyNavigation.down: workMobileValueLabel
+                    KeyNavigation.right: searchField
+                    urlOpenList: [UrlTypeExt.UrlType.Email]
                 }
                 ZoomLabel {
                     leftPadding: app.appFontSize/2
